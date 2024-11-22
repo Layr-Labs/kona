@@ -14,6 +14,7 @@ use kona_common_proc::client_entry;
 use kona_driver::{Driver, DriverError};
 use kona_preimage::{HintWriter, OracleReader};
 use kona_proof::{
+    altda::{self, OracleAltDAProvider, OracleEigenDAProvider},
     executor::KonaExecutorConstructor,
     l1::{OracleBlobProvider, OracleL1ChainProvider, OraclePipeline},
     l2::OracleL2ChainProvider,
@@ -70,6 +71,13 @@ fn main() -> Result<(), String> {
         let l1_provider = OracleL1ChainProvider::new(boot.clone(), oracle.clone());
         let l2_provider = OracleL2ChainProvider::new(boot.clone(), oracle.clone());
         let beacon = OracleBlobProvider::new(oracle.clone());
+        let altda_provider = if boot.rollup_config.is_alt_da_enabled() {
+            // TODO: altda_provider should be a struct that contains all the altda providers,
+            // such that a rollup can dynamically switch between da providers if needed.
+            Some(OracleAltDAProvider::new_from_oracle(oracle.clone()))
+        } else {
+            None
+        };
 
         // If the genesis block is claimed, we can exit early.
         // The agreed upon prestate is consented to by all parties, and there is no state
@@ -108,6 +116,7 @@ fn main() -> Result<(), String> {
             beacon,
             l1_provider.clone(),
             l2_provider.clone(),
+            altda_provider,
         );
         let executor = KonaExecutorConstructor::new(
             &cfg,

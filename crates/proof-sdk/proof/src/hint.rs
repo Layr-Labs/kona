@@ -36,6 +36,8 @@ pub enum HintType {
     /// A hint that specifies the proof on the path to a storage slot in an account within in the
     /// L2 state trie.
     L2AccountStorageProof,
+    /// A hint that specifies a commitment, meant to be requested from a da-server.
+    AltDACommitment,
 }
 
 impl HintType {
@@ -63,6 +65,7 @@ impl TryFrom<&str> for HintType {
             "l2-state-node" => Ok(Self::L2StateNode),
             "l2-account-proof" => Ok(Self::L2AccountProof),
             "l2-account-storage-proof" => Ok(Self::L2AccountStorageProof),
+            "altda-commitment" => Ok(Self::AltDACommitment),
             _ => Err(HintParsingError(value.to_string())),
         }
     }
@@ -83,6 +86,7 @@ impl From<HintType> for &str {
             HintType::L2StateNode => "l2-state-node",
             HintType::L2AccountProof => "l2-account-proof",
             HintType::L2AccountStorageProof => "l2-account-storage-proof",
+            HintType::AltDACommitment => "altda-commitment",
         }
     }
 }

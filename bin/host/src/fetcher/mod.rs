@@ -507,6 +507,10 @@ where
                     Ok::<(), anyhow::Error>(())
                 })?;
             }
+            HintType::AltDACommitment => {
+                todo!("AltDACommitment hint type is not yet implemented.");
+                // TODO: send commitment to da-server
+            }
         }
 
         Ok(())
