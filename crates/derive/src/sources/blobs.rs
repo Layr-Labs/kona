@@ -86,7 +86,7 @@ where
                 continue;
             }
             if tx.tx_type() != TxType::Eip4844 {
-                let blob_data = BlobData { data: None, calldata: Some(calldata.to_vec().into()) };
+                let blob_data = BlobData { data: None, calldata: Some(calldata) };
                 data.push(blob_data);
                 continue;
             }

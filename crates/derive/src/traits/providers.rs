@@ -47,6 +47,8 @@ pub trait L2ChainProvider: BatchValidationProviderDerive {
     ) -> Result<SystemConfig, <Self as L2ChainProvider>::Error>;
 }
 
+// TODO: add an EigenDAProvider here?
+
 /// A super-trait for [BatchValidationProvider] that binds `Self::Error` to have a conversion into
 /// [PipelineErrorKind].
 pub trait BatchValidationProviderDerive: BatchValidationProvider {}

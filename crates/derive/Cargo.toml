@@ -29,6 +29,10 @@ op-alloy-consensus = { workspace = true, features = ["k256"] }
 tracing.workspace = true
 async-trait.workspace = true
 thiserror.workspace = true
+tonic.workspace = true
+
+# AltDAs
+eigenda-protos = { git = "https://github.com/samlaf/eigenda-protos.git" }
 
 # `serde` feature dependencies
 serde = { workspace = true, optional = true, features = ["derive"] }
@@ -44,7 +48,12 @@ serde_json.workspace = true
 op-alloy-registry.workspace = true
 tokio = { workspace = true, features = ["full"] }
 tracing-subscriber = { workspace = true, features = ["fmt"] }
-alloy-primitives = { workspace = true, features = ["rlp", "k256", "map", "arbitrary"] }
+alloy-primitives = { workspace = true, features = [
+  "rlp",
+  "k256",
+  "map",
+  "arbitrary",
+] }
 
 [features]
 default = ["serde"]
@@ -57,7 +66,4 @@ serde = [
   "op-alloy-genesis/serde",
   "op-alloy-rpc-types-engine/serde",
 ]
-test-utils = [
-  "dep:spin",
-  "dep:tracing-subscriber",
-]
+test-utils = ["dep:spin", "dep:tracing-subscriber"]

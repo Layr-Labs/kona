@@ -3,7 +3,7 @@
 
 use crate::{
     sources::{BlobSource, CalldataSource},
-    traits::{BlobProvider, ChainProvider, DataAvailabilityProvider},
+    traits::{AltDAProvider, BlobProvider, ChainProvider, DataAvailabilityProvider},
     types::PipelineResult,
 };
 use alloc::{boxed::Box, fmt::Debug};
@@ -14,50 +14,68 @@ use op_alloy_protocol::BlockInfo;
 
 /// A factory for creating an Ethereum data source provider.
 #[derive(Debug, Clone)]
-pub struct EthereumDataSource<C, B>
+pub struct EthereumDataSource<C, B, A>
 where
     C: ChainProvider + Send + Clone,
     B: BlobProvider + Send + Clone,
+    A: AltDAProvider + Send + Clone,
 {
     /// The ecotone timestamp.
     pub ecotone_timestamp: Option<u64>,
     /// The blob source.
     pub blob_source: BlobSource<C, B>,
     /// The calldata source.
-    pub calldata_source: CalldataSource<C>,
+    pub calldata_source: CalldataSource<C, A>,
 }
 
-impl<C, B> EthereumDataSource<C, B>
+impl<C, B, A> EthereumDataSource<C, B, A>
 where
     C: ChainProvider + Send + Clone + Debug,
     B: BlobProvider + Send + Clone + Debug,
+    A: AltDAProvider + Send + Clone + Debug,
 {
     /// Instantiates a new [EthereumDataSource].
     pub const fn new(
         blob_source: BlobSource<C, B>,
-        calldata_source: CalldataSource<C>,
+        calldata_source: CalldataSource<C, A>,
         cfg: &RollupConfig,
     ) -> Self {
         Self { ecotone_timestamp: cfg.ecotone_time, blob_source, calldata_source }
     }
 
     /// Instantiates a new [EthereumDataSource] from parts.
-    pub fn new_from_parts(provider: C, blobs: B, cfg: &RollupConfig) -> Self {
+    pub fn new_from_parts(
+        chain_provider: C,
+        blobs: B,
+        altda_provider: Option<A>,
+        cfg: &RollupConfig,
+    ) -> Self {
         let signer =
             cfg.genesis.system_config.as_ref().map(|sc| sc.batcher_address).unwrap_or_default();
         Self {
             ecotone_timestamp: cfg.ecotone_time,
-            blob_source: BlobSource::new(provider.clone(), blobs, cfg.batch_inbox_address, signer),
-            calldata_source: CalldataSource::new(provider, cfg.batch_inbox_address, signer),
+            blob_source: BlobSource::new(
+                chain_provider.clone(),
+                blobs,
+                cfg.batch_inbox_address,
+                signer,
+            ),
+            calldata_source: CalldataSource::new(
+                chain_provider,
+                altda_provider,
+                cfg.batch_inbox_address,
+                signer,
+            ),
         }
     }
 }
 
 #[async_trait]
-impl<C, B> DataAvailabilityProvider for EthereumDataSource<C, B>
+impl<C, B, A> DataAvailabilityProvider for EthereumDataSource<C, B, A>
 where
     C: ChainProvider + Send + Sync + Clone + Debug,
     B: BlobProvider + Send + Sync + Clone + Debug,
+    A: AltDAProvider + Send + Sync + Clone + Debug,
 {
     type Item = Bytes;
 
@@ -82,7 +100,7 @@ mod tests {
     use super::*;
     use crate::{
         sources::BlobData,
-        test_utils::{TestBlobProvider, TestChainProvider},
+        test_utils::{TestAltDAProvider, TestBlobProvider, TestChainProvider},
     };
     use alloy_consensus::TxEnvelope;
     use alloy_eips::eip2718::Decodable2718;
@@ -103,7 +121,8 @@ mod tests {
         let chain = TestChainProvider::default();
         let blob = TestBlobProvider::default();
         let cfg = RollupConfig::default();
-        let mut calldata = CalldataSource::new(chain.clone(), Address::ZERO, Address::ZERO);
+        let mut calldata: CalldataSource<_, TestAltDAProvider> =
+            CalldataSource::new(chain.clone(), None, Address::ZERO, Address::ZERO);
         calldata.calldata.insert(0, Default::default());
         calldata.open = true;
         let mut blob = BlobSource::new(chain, blob, Address::ZERO, Address::ZERO);
@@ -124,7 +143,8 @@ mod tests {
         let mut blob = default_test_blob_source();
         blob.open = true;
         blob.data.push(BlobData { data: None, calldata: Some(Bytes::default()) });
-        let calldata = CalldataSource::new(chain.clone(), Address::ZERO, Address::ZERO);
+        let calldata: CalldataSource<_, TestAltDAProvider> =
+            CalldataSource::new(chain.clone(), None, Address::ZERO, Address::ZERO);
         let cfg = RollupConfig { ecotone_time: Some(0), ..Default::default() };
 
         // Should successfully retrieve a blob batch from the block
@@ -151,7 +171,8 @@ mod tests {
         chain.insert_block_with_transactions(10, block_ref, alloc::vec![tx]);
 
         // Should successfully retrieve a calldata batch from the block
-        let mut data_source = EthereumDataSource::new_from_parts(chain, blob, &cfg);
+        let mut data_source: EthereumDataSource<_, _, TestAltDAProvider> =
+            EthereumDataSource::new_from_parts(chain, blob, None, &cfg);
         let calldata_batch = data_source.next(&block_ref).await.unwrap();
         assert_eq!(calldata_batch.len(), 119823);
     }

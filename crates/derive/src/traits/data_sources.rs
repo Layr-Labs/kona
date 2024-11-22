@@ -23,6 +23,31 @@ pub trait BlobProvider {
     ) -> Result<Vec<Box<Blob>>, Self::Error>;
 }
 
+/// The AltDAProvider trait specifies the functionality of a data source that can provide altda blobs.
+#[async_trait]
+pub trait AltDAProvider {
+    /// The error type for the [EigenDAProvider].
+    type Error: Display + ToString + Into<PipelineErrorKind>;
+
+    async fn get_blob(&self, commitment: Bytes) -> Result<Bytes, Self::Error>;
+}
+
+/// The EigenDAProvider trait specifies the functionality of a data source that can provide eigenda blobs.
+#[async_trait]
+pub trait EigenDAProvider {
+    /// The error type for the [EigenDAProvider].
+    type Error: Display + ToString + Into<PipelineErrorKind>;
+
+    async fn get_blob_v1(
+        &self,
+        batch_header_hash: Bytes,
+        blob_index: u64,
+    ) -> Result<Bytes, Self::Error>;
+
+    // TODO: should this be in a separate v2 trait?
+    async fn get_blob_v2(&self, blob_hashes: Bytes) -> Result<Bytes, Self::Error>;
+}
+
 /// Describes the functionality of a data source that can provide data availability information.
 #[async_trait]
 pub trait DataAvailabilityProvider {

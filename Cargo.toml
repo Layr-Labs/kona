@@ -136,3 +136,6 @@ revm = { version = "16.0.0", default-features = false }
 
 # K/V database
 rocksdb = { version = "0.22", default-features = false }
+
+# grpc
+tonic = "0.12.3"
