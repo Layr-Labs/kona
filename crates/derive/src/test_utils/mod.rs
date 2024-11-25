@@ -13,6 +13,9 @@ pub use blob_provider::TestBlobProvider;
 mod chain_providers;
 pub use chain_providers::{TestChainProvider, TestL2ChainProvider, TestProviderError};
 
+mod altda_provider;
+pub use altda_provider::{TestAltDAProvider, TestAltDAProviderError};
+
 mod data_availability_provider;
 pub use data_availability_provider::TestDAP;
 

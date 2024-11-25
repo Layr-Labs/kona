@@ -21,3 +21,6 @@ pub use blobs::BlobSource;
 
 mod calldata;
 pub use calldata::CalldataSource;
+
+mod altda_data;
+pub use altda_data::AltDACommitment;

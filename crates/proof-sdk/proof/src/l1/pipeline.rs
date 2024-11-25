@@ -1,6 +1,11 @@
 //! Contains an oracle-backed pipeline.
 
-use crate::{l1::OracleL1ChainProvider, l2::OracleL2ChainProvider, FlushableCache};
+use crate::{
+    altda::{OracleAltDAProvider, OracleEigenDAProvider},
+    l1::OracleL1ChainProvider,
+    l2::OracleL2ChainProvider,
+    FlushableCache,
+};
 use alloc::{boxed::Box, sync::Arc};
 use async_trait::async_trait;
 use core::fmt::Debug;
@@ -29,7 +34,8 @@ pub type OracleDerivationPipeline<O, B> = DerivationPipeline<
 >;
 
 /// An oracle-backed Ethereum data source.
-pub type OracleDataProvider<O, B> = EthereumDataSource<OracleL1ChainProvider<O>, B>;
+pub type OracleDataProvider<O, B> =
+    EthereumDataSource<OracleL1ChainProvider<O>, B, OracleAltDAProvider<O>>;
 
 /// An oracle-backed payload attributes builder for the `AttributesQueue` stage of the derivation
 /// pipeline.
@@ -67,7 +73,7 @@ where
 
 impl<O, B> OraclePipeline<O, B>
 where
-    O: CommsClient + FlushableCache + FlushableCache + Send + Sync + Debug,
+    O: CommsClient + FlushableCache + Send + Sync + Debug,
     B: BlobProvider + Send + Sync + Debug + Clone,
 {
     /// Constructs a new oracle-backed derivation pipeline.
@@ -78,13 +84,19 @@ where
         blob_provider: B,
         chain_provider: OracleL1ChainProvider<O>,
         l2_chain_provider: OracleL2ChainProvider<O>,
+        altda_provider: Option<OracleAltDAProvider<O>>,
     ) -> Self {
         let attributes = StatefulAttributesBuilder::new(
             cfg.clone(),
             l2_chain_provider.clone(),
             chain_provider.clone(),
         );
-        let dap = EthereumDataSource::new_from_parts(chain_provider.clone(), blob_provider, &cfg);
+        let dap = EthereumDataSource::new_from_parts(
+            chain_provider.clone(),
+            blob_provider,
+            altda_provider,
+            &cfg,
+        );
 
         let pipeline = PipelineBuilder::new()
             .rollup_config(cfg)
