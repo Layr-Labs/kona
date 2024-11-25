@@ -34,11 +34,10 @@ impl<T: CommsClient + Send + Sync> AltDAProvider for OracleAltDAProvider<T> {
     /// Retrieves a blob from the oracle.
     ///
     /// ## Takes
-    /// - `block_ref`: The block reference.
-    /// - `blob_hash`: The blob hash.
+    /// - `commitment`: The commitment to the blob (specific to each AltDA provider).
     ///
     /// ## Returns
-    /// - `Ok(blob)`: The blob.
+    /// - `Ok(Bytes)`: The blob.
     /// - `Err(e)`: The blob could not be retrieved.
     async fn get_blob(&self, commitment: Bytes) -> Result<Bytes, OracleProviderError> {
         todo!("implement the EigenDA blob retrieval here");
