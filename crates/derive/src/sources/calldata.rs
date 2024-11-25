@@ -11,8 +11,7 @@ use alloy_primitives::{Address, Bytes};
 use async_trait::async_trait;
 use op_alloy_protocol::BlockInfo;
 
-// TODO: upstream to op_alloy_protocol
-const DERIVATION_VERSION_1: u8 = 1;
+use super::altda_data::BatcherSubmission;
 
 /// A data iterator that reads from calldata.
 #[derive(Debug, Clone)]
@@ -90,28 +89,27 @@ where
         // TODO: refactor this to use an async filter_map to fit in previous filter_map
         let mut results = VecDeque::new();
         for data_or_commitment in data_or_commitments {
-            // We fetch blobs from altda when the version byte is 1.
-            // See https://specs.optimism.io/experimental/alt-da.html#input-commitment-submission
-            let data = match data_or_commitment[0] {
-                DERIVATION_VERSION_1 => {
-                    // altda commitment, we need to fetch the data
-                    match self.altda_provider.as_ref() {
-                        Some(provider) => {
-                            match provider.get_blob(data_or_commitment[1..].to_vec().into()).await {
-                                Ok(blob) => blob,
-                                Err(err) => {
-                                    warn!("failed to fetch altda commitment: {}", err);
-                                    continue;
-                                }
-                            }
-                        }
-                        None => {
-                            warn!("altda commitment found but no altda provider is set");
+            // use parse() to determine the type of commitment
+            let submission = BatcherSubmission::parse(data_or_commitment.clone());
+            let data = match submission {
+                None => continue,
+                // return data_or_commitment (including version byte), because frame queue expects it
+                Some(BatcherSubmission::Frames(_)) => data_or_commitment,
+                Some(BatcherSubmission::Commitment(altda_commitment)) => {
+                    let provider = if let Some(p) = self.altda_provider.as_ref() {
+                        p
+                    } else {
+                        warn!("altda commitment found but no altda provider is set");
+                        continue;
+                    };
+                    match provider.get_blob(altda_commitment).await {
+                        Ok(blob) => blob,
+                        Err(err) => {
+                            warn!("failed to fetch altda commitment: {}", err);
                             continue;
                         }
                     }
                 }
-                _ => data_or_commitment.clone(),
             };
             results.push_back(data);
         }
@@ -146,6 +144,7 @@ mod tests {
     use super::*;
     use crate::{
         errors::PipelineErrorKind,
+        sources::altda_data::DERIVATION_VERSION_1,
         test_utils::{TestAltDAProvider, TestChainProvider},
     };
     use alloc::{vec, vec::Vec};

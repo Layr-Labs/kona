@@ -1,7 +1,10 @@
 //! Contains traits that describe the functionality of various data sources used in the derivation
 //! pipeline's stages.
 
-use crate::{errors::PipelineErrorKind, sources::IndexedBlobHash, types::PipelineResult};
+use crate::{
+    errors::PipelineErrorKind, sources::AltDACommitment, sources::IndexedBlobHash,
+    types::PipelineResult,
+};
 use alloc::{boxed::Box, fmt::Debug, string::ToString, vec::Vec};
 use alloy_eips::eip4844::Blob;
 use alloy_primitives::Bytes;
@@ -29,7 +32,8 @@ pub trait AltDAProvider {
     /// The error type for the [EigenDAProvider].
     type Error: Display + ToString + Into<PipelineErrorKind>;
 
-    async fn get_blob(&self, commitment: Bytes) -> Result<Bytes, Self::Error>;
+    /// Fetches a blob for a given commitment.
+    async fn get_blob(&self, commitment: AltDACommitment) -> Result<Bytes, Self::Error>;
 }
 
 /// The EigenDAProvider trait specifies the functionality of a data source that can provide eigenda blobs.
@@ -38,14 +42,9 @@ pub trait EigenDAProvider {
     /// The error type for the [EigenDAProvider].
     type Error: Display + ToString + Into<PipelineErrorKind>;
 
-    async fn get_blob_v1(
-        &self,
-        batch_header_hash: Bytes,
-        blob_index: u64,
-    ) -> Result<Bytes, Self::Error>;
+    async fn get_blob_v1(&self, cert: Bytes) -> Result<Bytes, Self::Error>;
 
-    // TODO: should this be in a separate v2 trait?
-    async fn get_blob_v2(&self, blob_hashes: Bytes) -> Result<Bytes, Self::Error>;
+    async fn get_blob_v2(&self, cert: Bytes) -> Result<Bytes, Self::Error>;
 }
 
 /// Describes the functionality of a data source that can provide data availability information.

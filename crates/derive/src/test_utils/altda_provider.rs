@@ -1,6 +1,7 @@
 //! An implementation of the [AltDAProvider] trait for tests.
 
 use crate::errors::{PipelineError, PipelineErrorKind};
+use crate::prelude::AltDACommitment;
 use crate::traits::AltDAProvider;
 use alloc::boxed::Box;
 use alloy_primitives::map::HashMap;
@@ -43,7 +44,9 @@ impl From<TestAltDAProviderError> for PipelineErrorKind {
 impl AltDAProvider for TestAltDAProvider {
     type Error = TestAltDAProviderError;
 
-    async fn get_blob(&self, commitment: Bytes) -> Result<Bytes, Self::Error> {
-        self.blobs.get(&commitment).cloned().ok_or(TestAltDAProviderError::BlobNotFound)
+    async fn get_blob(&self, commitment: AltDACommitment) -> Result<Bytes, Self::Error> {
+        // We extract the bytes out of the altda commitment, regardless of the altda layer.
+        // Basically every altda layer is mixed into a single HashMap in this test provider
+        self.blobs.get(commitment.payload()).cloned().ok_or(TestAltDAProviderError::BlobNotFound)
     }
 }
