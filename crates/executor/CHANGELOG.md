@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0](https://github.com/Layr-Labs/kona/compare/kona-executor-v0.1.0...kona-executor-v0.2.0) - 2024-12-03
+
+### Added
+
+- *(driver)* refines the executor interface for the driver ([#850](https://github.com/Layr-Labs/kona/pull/850))
+
+### Fixed
+
+- bump ([#855](https://github.com/Layr-Labs/kona/pull/855))
+- use non problematic hashmap fns ([#853](https://github.com/Layr-Labs/kona/pull/853))
+
 ## [0.0.6](https://github.com/anton-rs/kona/compare/kona-executor-v0.0.5...kona-executor-v0.0.6) - 2024-11-20
 
 ### Added
