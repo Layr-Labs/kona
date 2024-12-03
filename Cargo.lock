@@ -2348,7 +2348,7 @@ dependencies = [
 
 [[package]]
 name = "kona-derive"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -2372,7 +2372,7 @@ dependencies = [
 
 [[package]]
 name = "kona-driver"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "alloy-consensus",
  "alloy-primitives",
@@ -2389,7 +2389,7 @@ dependencies = [
 
 [[package]]
 name = "kona-executor"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -2450,7 +2450,7 @@ dependencies = [
 
 [[package]]
 name = "kona-mpt"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "alloy-consensus",
  "alloy-primitives",
@@ -2473,7 +2473,7 @@ dependencies = [
 
 [[package]]
 name = "kona-preimage"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "alloy-primitives",
  "async-channel",
@@ -2487,7 +2487,7 @@ dependencies = [
 
 [[package]]
 name = "kona-proof"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -2515,7 +2515,7 @@ dependencies = [
 
 [[package]]
 name = "kona-std-fpvm"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "async-trait",
  "cfg-if",
