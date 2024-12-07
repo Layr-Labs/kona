@@ -3,10 +3,8 @@ use crate::errors::BlobDecodingError;
 
 #[derive(Default, Clone, Debug)]
 pub struct EigenDABlobData {
-    /// The blob data
-    pub(crate) version: Option<Bytes>,
     /// The calldata
-    pub(crate) blob: Option<Bytes>,
+    pub(crate) blob: Bytes,
 }
 
 impl EigenDABlobData {
@@ -14,7 +12,8 @@ impl EigenDABlobData {
     /// Returns a [BlobDecodingError] if the blob is invalid.
     pub(crate) fn decode(&self) -> Result<Bytes, BlobDecodingError> {
         // where we can implement zero bytes etc.
-        todo!()
+        info!(target: "eigenda-blobdata", "decode {} {:?}", self.blob.len(), self.blob.clone());
+        Ok(self.blob.clone())
     }
 
 }

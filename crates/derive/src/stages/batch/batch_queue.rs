@@ -242,9 +242,17 @@ where
         let origin = self.origin.ok_or(PipelineError::MissingOrigin.crit())?;
         let data = BatchWithInclusionBlock { inclusion_block: origin, batch };
         // If we drop the batch, validation logs the drop reason with WARN level.
+        info!(target: "batch-queue", "self.l1_blocks {:?} parenet {:?}", self.l1_blocks, parent);
+        info!(target: "batch-queue", "origin {:?} batch {:?} ", origin, data);
+        
+
         let validity =
             data.check_batch(&self.cfg, &self.l1_blocks, parent, &mut self.fetcher).await;
+
+        info!(target: "batch-queue", "validity {:?}", validity);
+
         // Post-Holocene, future batches are dropped due to prevent gaps.
+        
         let drop = validity.is_drop() ||
             (self.cfg.is_holocene_active(origin.timestamp) && validity.is_future());
         if drop {
@@ -254,6 +262,8 @@ where
             // If the batch is outdated, we drop it without flushing the previous stage.
             return Ok(());
         }
+         
+        info!(target: "batch-queue", "pushed data");
         self.batches.push(data);
         Ok(())
     }
@@ -279,6 +289,7 @@ where
     /// Returns the next valid batch upon the given safe head.
     /// Also returns the boolean that indicates if the batch is the last block in the batch.
     async fn next_batch(&mut self, parent: L2BlockInfo) -> PipelineResult<SingleBatch> {
+        info!(target="batch-queue", "next-batch parent {:?}", parent);
         if !self.next_spans.is_empty() {
             // There are cached singular batches derived from the span batch.
             // Check if the next cached batch matches the given parent block.
@@ -319,6 +330,8 @@ where
         let origin_behind =
             self.prev.origin().map_or(true, |origin| origin.number < parent.l1_origin.number);
 
+        info!(target="batch-queue", "origin_behind {}, prev.origin {:?}, parent.l1_origin.number {:?}", origin_behind, self.prev.origin(), parent.l1_origin.number);
+
         // Advance the origin if needed.
         // The entire pipeline has the same origin.
         // Batches prior to the l1 origin of the l2 safe head are not accepted.
@@ -347,6 +360,7 @@ where
         match self.prev.next_batch(parent, &self.l1_blocks).await {
             Ok(b) => {
                 if !origin_behind {
+                    info!(target="batch-queue", "adding batch nice");
                     self.add_batch(b, parent).await.ok();
                 } else {
                     warn!(target: "batch-queue", "Dropping batch: Origin is behind");
@@ -361,6 +375,8 @@ where
             }
         }
 
+        info!(target: "batch-queue", "called next_batch {}", origin_behind);
+
         // Skip adding the data unless up to date with the origin,
         // but still fully empty the previous stages.
         if origin_behind {
@@ -370,6 +386,7 @@ where
             return Err(PipelineError::NotEnoughData.temp());
         }
 
+        info!(target: "batch-queue", "Attempt to derive more batches.");
         // Attempt to derive more batches.
         let batch = match self.derive_next_batch(out_of_data, parent).await {
             Ok(b) => b,

@@ -131,12 +131,15 @@ where
 
         // If the buffer is empty, attempt to pull a batch from the previous stage.
         if self.buffer.is_empty() {
+            trace!(target: "batch_span", "buffer is empty, attempt to pull a batch from the previous stage");
+
             // Safety: bubble up any errors from the batch reader.
             let batch_with_inclusion = BatchWithInclusionBlock::new(
                 self.origin().ok_or(PipelineError::MissingOrigin.crit())?,
                 self.prev.next_batch().await?,
             );
 
+            trace!(target: "batch_span", "batch_with_inclusion {:?}", batch_with_inclusion);
             // If the next batch is a singular batch, it is immediately
             // forwarded to the `BatchQueue` stage. Otherwise, we buffer
             // the span batch in this stage if it passes the validity checks.

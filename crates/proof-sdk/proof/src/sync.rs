@@ -22,6 +22,7 @@ where
     O: CommsClient + FlushableCache + FlushableCache + Send + Sync + Debug,
 {
     let safe_head_info = l2_chain_provider.l2_block_info_by_number(safe_header.number).await?;
+    info!(target: "client", "safe_head_info {:?}", safe_head_info);
     let l1_origin = chain_provider.block_info_by_number(safe_head_info.l1_origin.number).await?;
 
     info!(target: "client", "hehe l1_origin {:?}", l1_origin);

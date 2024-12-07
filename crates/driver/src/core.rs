@@ -86,6 +86,8 @@ where
                 }
             }
 
+            info!(target = "pipeline", "trying  advance_to_target got attributes");
+
             let OpAttributesWithParent { mut attributes, .. } = match self
                 .pipeline
                 .produce_payload(*self.cursor.l2_safe_head())
@@ -107,6 +109,8 @@ where
                     return Err(DriverError::Pipeline(e));
                 }
             };
+
+            info!(target = "pipeline", "advance_to_target got attributes");
 
             self.executor.update_safe_head(self.cursor.l2_safe_head_header().clone());
             let header = match self.executor.execute_payload(attributes.clone()) {

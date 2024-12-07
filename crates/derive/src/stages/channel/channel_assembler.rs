@@ -79,7 +79,6 @@ where
                 self.channel = None;
             }
         }
-
         // Grab the next frame from the previous stage.
         let next_frame = self.prev.next_frame().await?;
 
