@@ -1,7 +1,7 @@
 //! This module contains the [Fetcher] struct, which is responsible for fetching preimages from a
 //! remote source.
 
-use crate::{blobs::OnlineBlobProvider, kv::KeyValueStore};
+use crate::{blobs::OnlineBlobProvider, eigenda_blobs::OnlineEigenDABlobProvider, kv::KeyValueStore};
 use alloy_consensus::{Header, TxEnvelope, EMPTY_ROOT_HASH};
 use alloy_eips::{
     eip2718::Encodable2718,
@@ -22,7 +22,7 @@ use op_alloy_protocol::BlockInfo;
 use op_alloy_rpc_types_engine::OpPayloadAttributes;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{error, trace, warn};
+use tracing::{error, trace, warn, info};
 
 mod precompiles;
 
@@ -38,6 +38,8 @@ where
     l1_provider: ReqwestProvider,
     /// The blob provider
     blob_provider: OnlineBlobProvider,
+    /// The eigenda provider
+    eigenda_blob_provider: OnlineEigenDABlobProvider,
     /// L2 chain provider.
     l2_provider: ReqwestProvider,
     /// L2 head
@@ -55,10 +57,11 @@ where
         kv_store: Arc<RwLock<KV>>,
         l1_provider: ReqwestProvider,
         blob_provider: OnlineBlobProvider,
+        eigenda_blob_provider: OnlineEigenDABlobProvider,
         l2_provider: ReqwestProvider,
         l2_head: B256,
     ) -> Self {
-        Self { kv_store, l1_provider, blob_provider, l2_provider, l2_head, last_hint: None }
+        Self { kv_store, l1_provider, blob_provider, eigenda_blob_provider, l2_provider, l2_head, last_hint: None }
     }
 
     /// Set the last hint to be received.
@@ -97,6 +100,7 @@ where
 
     /// Fetch the preimage for the given hint and insert it into the key-value store.
     async fn prefetch(&self, hint: &str) -> Result<()> {
+        trace!(target: "fetcher", "prefetch: {hint}");
         let hint = Hint::parse(hint)?;
         let (hint_type, hint_data) = hint.split();
         trace!(target: "fetcher", "Fetching hint: {hint_type} {hint_data}");
@@ -540,6 +544,27 @@ where
                     let key = PreimageKey::new(*hash, PreimageKeyType::Keccak256);
                     kv_write_lock.set(key.into(), preimage.into())?;
                 }
+            }
+            HintType::AltDACommitment => {
+                let cert = hint_data;
+                info!(target: "fetcher", "Fetching AltDACommitment cert: {:?}", cert);
+                // Fetch the blob sidecar from the blob provider.
+                let eigenda_blob = self
+                    .eigenda_blob_provider.
+                    fetch_eigenda_blob(&cert).
+                    await.
+                    map_err(|e| anyhow!("Failed to fetch eigenda blob: {e}"))?;
+
+                info!(target: "fetcher", "eigenda_blob len {}", eigenda_blob.len());
+                // Acquire a lock on the key-value store and set the preimages.
+                let mut kv_write_lock = self.kv_store.write().await;
+
+                // Set the preimage for the blob commitment.
+                kv_write_lock.set(
+                    PreimageKey::new(*keccak256(cert), PreimageKeyType::GlobalGeneric).into(),
+                    eigenda_blob.to_vec(),
+                )?;
+
             }
         }
 

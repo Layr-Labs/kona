@@ -101,8 +101,10 @@ where
         self.attempt_update()?;
 
         if let Some(batch_validator) = self.batch_validator.as_mut() {
+            info!(target="batch-provider", "BatchProvider batch_validator");
             batch_validator.advance_origin().await
         } else if let Some(batch_queue) = self.batch_queue.as_mut() {
+            info!(target="batch-provider", "BatchProvider batch_queue");
             batch_queue.advance_origin().await
         } else {
             Err(PipelineError::NotEnoughData.temp())
