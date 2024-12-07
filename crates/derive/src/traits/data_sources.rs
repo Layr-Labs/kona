@@ -29,7 +29,7 @@ pub trait EigenDABlobProvider {
     /// The error type for the [EigenDAProvider].
     type Error: Display + ToString + Into<PipelineErrorKind>;
 
-    async fn get_blob(&self, cert: Bytes) -> Result<Bytes, Self::Error>;
+    async fn get_blob(&mut self, cert: &Bytes) -> Result<Bytes, Self::Error>;
 }
 
 

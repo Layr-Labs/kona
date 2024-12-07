@@ -143,9 +143,13 @@ where
         self.attempt_update()?;
 
         if let Some(channel_assembler) = self.channel_assembler.as_mut() {
+            info!(target: "channel-reader", "channel_assembler");
             channel_assembler.next_data().await
         } else if let Some(channel_bank) = self.channel_bank.as_mut() {
-            channel_bank.next_data().await
+            info!(target: "channel-reader", "channel_bank");
+            let a = channel_bank.next_data().await;
+            info!(target: "channel-reader", "channel_bank return {:?}", a);
+            a
         } else {
             Err(PipelineError::NotEnoughData.temp())
         }

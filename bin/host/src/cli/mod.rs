@@ -2,6 +2,7 @@
 
 use crate::{
     blobs::OnlineBlobProvider,
+    eigenda_blobs::OnlineEigenDABlobProvider,
     kv::{
         DiskKeyValueStore, LocalKeyValueStore, MemoryKeyValueStore, SharedKeyValueStore,
         SplitKeyValueStore,
@@ -35,6 +36,8 @@ server and waits for the client program in the parent process to request pre-ima
 mode, the host runs the client program in a separate thread with the pre-image server in the
 primary thread.
 ";
+
+const EIGENDA_ADDRESS: &str = "127.0.0.1:31001";
 
 /// The host binary CLI application arguments.
 #[derive(Default, Parser, Serialize, Clone, Debug)]
@@ -145,12 +148,19 @@ impl HostCli {
     /// - A [ReqwestProvider] for the L2 node.
     pub async fn create_providers(
         &self,
-    ) -> Result<(ReqwestProvider, OnlineBlobProvider, ReqwestProvider)> {
+    ) -> Result<(ReqwestProvider, OnlineBlobProvider, OnlineEigenDABlobProvider, ReqwestProvider )> {
         let blob_provider = OnlineBlobProvider::new_http(
             self.l1_beacon_address.clone().ok_or(anyhow!("Beacon API URL must be set"))?,
         )
         .await
         .map_err(|e| anyhow!("Failed to load blob provider configuration: {e}"))?;
+    
+        let eigenda_blob_provider = OnlineEigenDABlobProvider::new_http(
+            //EIGENDA_ADDRESS.to_string(),
+            "http://127.0.0.1:3100".to_string(),
+        ).await
+        .map_err(|e| anyhow!("Failed to load eigenda blob provider configuration: {e}"))?;
+
         let l1_provider = Self::http_provider(
             self.l1_node_address.as_ref().ok_or(anyhow!("Provider must be set"))?,
         );
@@ -158,7 +168,7 @@ impl HostCli {
             self.l2_node_address.as_ref().ok_or(anyhow!("L2 node address must be set"))?,
         );
 
-        Ok((l1_provider, blob_provider, l2_provider))
+        Ok((l1_provider, blob_provider, eigenda_blob_provider, l2_provider))
     }
 
     /// Parses the CLI arguments and returns a new instance of a [SharedKeyValueStore], as it is

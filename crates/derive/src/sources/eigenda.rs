@@ -22,7 +22,7 @@ where
     /// The blob source.
     pub ethereum_source: EthereumDataSource<C, B>,
     /// The eigenda source.
-    pub eigenda_source: Option<EigenDABlobSource<A>>,
+    pub eigenda_source: EigenDABlobSource<A>,
 }
 
 impl<C, B, A> EigenDADataSource<C, B, A>
@@ -34,7 +34,7 @@ where
     /// Instantiates a new [EigenDADataSource].
     pub const fn new(
         ethereum_source: EthereumDataSource<C, B>,
-        eigenda_source: Option<EigenDABlobSource<A>>,
+        eigenda_source: EigenDABlobSource<A>,
     ) -> Self {
         Self { ethereum_source, eigenda_source }
     }
@@ -53,13 +53,16 @@ where
         // then acutally use ethereum da to fetch. items are Bytes
         let item = self.ethereum_source.next(block_ref).await?;
 
-        //self.eigenda_source.next(&item).await
         // just dump all the data out
-        todo!()  
+        info!(target: "eth-datasource", "next item {:?}", item);
+
+        let eigenda_source_result = self.eigenda_source.next(&item).await;
+        info!(target: "eigenda-datasource", "eigenda_source_result {:?}", eigenda_source_result);
+        eigenda_source_result
     } 
 
     fn clear(&mut self) {
-        //self.eigenda_source.clear();
+        self.eigenda_source.clear();
         self.ethereum_source.clear();
     }
 }

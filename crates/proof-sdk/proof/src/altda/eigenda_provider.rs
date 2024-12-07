@@ -27,9 +27,7 @@ impl<T: CommsClient> OracleEigenDAProvider<T> {
 impl<T: CommsClient + Sync + Send> EigenDABlobProvider for OracleEigenDAProvider<T> {
     type Error = OracleProviderError;
 
-    async fn get_blob(&self, cert: Bytes) -> Result<Bytes, Self::Error> {
-        Err(OracleProviderError::AltDA("eigenda v1 ncommented".to_string()))
-        /*
+    async fn get_blob(&mut self, cert: &Bytes) -> Result<Bytes, Self::Error> {
         self.oracle
             .write(&HintType::AltDACommitment.encode_with(&[&cert]))
             .await
@@ -38,8 +36,7 @@ impl<T: CommsClient + Sync + Send> EigenDABlobProvider for OracleEigenDAProvider
             .oracle
             .get(PreimageKey::new(*keccak256(cert), PreimageKeyType::GlobalGeneric))
             .await
-            .map_err(OracleProviderError::Preimage)?;
+            .map_err(OracleProviderError::Preimage)?;        
         Ok(data.into())
-        */
     }
 }
