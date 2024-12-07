@@ -171,6 +171,8 @@ where
             parent_beacon_root = Some(l1_header.parent_beacon_block_root.unwrap_or_default());
         }
 
+        info!(target: "prepare_payload_attributes", "num tx {}", txs.len());
+
         Ok(OpPayloadAttributes {
             payload_attributes: PayloadAttributes {
                 timestamp: next_l2_time,

@@ -77,6 +77,7 @@ impl<F: ChainProvider + Send> OriginAdvancer for L1Traversal<F> {
                 return Err(PipelineError::Eof.temp());
             }
         };
+        info!(target:"l1-traversal", "next_l1_origin {:?}", block.number+1);
         let next_l1_origin =
             self.data_source.block_info_by_number(block.number + 1).await.map_err(Into::into)?;
 

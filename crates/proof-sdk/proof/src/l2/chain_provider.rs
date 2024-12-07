@@ -64,7 +64,9 @@ impl<T: CommsClient> OracleL2ChainProvider<T> {
 
         // Walk back the block headers to the desired block number.
         while header.number > block_number {
+            info!(target="client", "OracleL2ChainProvider header number {}", header.number);
             header = self.header_by_hash(header.parent_hash)?;
+            info!(target="client", "OracleL2ChainProvider header {:?}", header);
         }
 
         Ok(header)

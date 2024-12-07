@@ -61,7 +61,9 @@ impl<T: CommsClient + Sync + Send> ChainProvider for OracleL1ChainProvider<T> {
 
         // Walk back the block headers to the desired block number.
         while header.number > block_number {
+            info!(target="client", "OracleL1ChainProvider header number {}", header.number);
             header = self.header_by_hash(header.parent_hash).await?;
+            info!(target="client", "OracleL1ChainProvider header {:?}", header);
         }
 
         Ok(BlockInfo {

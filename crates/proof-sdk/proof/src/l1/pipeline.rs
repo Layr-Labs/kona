@@ -106,7 +106,7 @@ where
         );
         let dap = EthereumDataSource::new_from_parts(chain_provider.clone(), blob_provider, &cfg);
         let eigenda_blob_source = EigenDABlobSource::new(eigenda_blob_provider);
-        let dap =  EigenDADataSource::new(dap, Some(eigenda_blob_source));
+        let dap =  EigenDADataSource::new(dap, eigenda_blob_source);
 
         let pipeline = PipelineBuilder::new()
             .rollup_config(cfg)

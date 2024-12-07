@@ -172,6 +172,7 @@ where
                 PipelineErrorKind::Temporary(PipelineError::Eof) => {
                     trace!(target: "pipeline", "Pipeline advancing origin");
                     if let Err(e) = self.attributes.advance_origin().await {
+                        warn!(target: "pipeline", "advance_origin something {:?}", e);    
                         return StepResult::OriginAdvanceErr(e);
                     }
                     StepResult::AdvancedOrigin
