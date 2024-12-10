@@ -30,6 +30,8 @@ pub trait EigenDABlobProvider {
     type Error: Display + ToString + Into<PipelineErrorKind>;
 
     async fn get_blob(&mut self, cert: &Bytes) -> Result<Bytes, Self::Error>;
+
+    async fn get_element(&mut self, cert: &Bytes, element: &Bytes) -> Result<Bytes, Self::Error>;
 }
 
 
