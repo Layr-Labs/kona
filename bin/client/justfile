@@ -62,6 +62,25 @@ run-client-asterisc block_number l1_rpc l1_beacon_rpc l2_rpc rollup_node_rpc ver
     --data-dir ./data \
     {{verbosity}}
 
+# Run the client program natively with the host program attached, against the op-devnet.
+run-client-native-against-devnet verbosity='' block_number='' rollup_config_path='':
+  #!/usr/bin/env bash
+  L1_RPC="http://127.0.0.1:8545"
+  L1_BEACON_RPC="http://127.0.0.1:5052"
+  L2_RPC="http://127.0.0.1:9545"
+  ROLLUP_NODE_RPC="http://127.0.0.1:7545"
+  ROLLUP_CONFIG_PATH="../../../optimism/.devnet/rollup.json"
+
+  if [ -z "{{block_number}}" ]; then
+    BLOCK_NUMBER=$(cast block finalized --json --rpc-url $L2_RPC | jq -r .number | cast 2d)
+  else
+    BLOCK_NUMBER={{block_number}}
+  fi
+
+  just run-client-native $BLOCK_NUMBER \
+    $L1_RPC $L1_BEACON_RPC $L2_RPC $ROLLUP_NODE_RPC \
+    $ROLLUP_CONFIG_PATH {{verbosity}}
+
 # Run the client program natively with the host program attached.
 run-client-native block_number l1_rpc l1_beacon_rpc l2_rpc rollup_node_rpc rollup_config_path='' verbosity='':
   #!/usr/bin/env bash
