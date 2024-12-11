@@ -123,7 +123,10 @@ where
             }
         };
 
-        let Ok(frames) = Frame::parse_frames(&data.into()) else {
+        let a = data.into();
+        info!(target: "frame-queue", "Frame before parse {:x?}",a.clone());
+
+        let Ok(frames) = Frame::parse_frames(&a) else {
             // There may be more frames in the queue for the
             // pipeline to advance, so don't return an error here.
             error!(target: "frame-queue", "Failed to parse frames from data.");
@@ -132,6 +135,8 @@ where
 
         // Optimistically extend the queue with the new frames.
         self.queue.extend(frames);
+
+        info!(target: "frame-queue", "queue extended");
 
         // Prune frames if Holocene is active.
         let origin = self.origin().ok_or(PipelineError::MissingOrigin.crit())?;
@@ -159,12 +164,14 @@ where
     async fn next_frame(&mut self) -> PipelineResult<Frame> {
         self.load_frames().await?;
 
+        info!(target: "frame-queue", "next_frame");
+
         // If we did not add more frames but still have more data, retry this function.
         if self.queue.is_empty() {
             trace!(target: "frame-queue", "Queue is empty after fetching data. Retrying next_frame.");
             return Err(PipelineError::NotEnoughData.temp());
         }
-
+        info!(target: "frame-queue", "before pop {}", self.queue.len());
         Ok(self.queue.pop_front().expect("Frame queue impossibly empty"))
     }
 }

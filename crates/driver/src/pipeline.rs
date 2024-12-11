@@ -85,12 +85,16 @@ where
                                 .await?;
                             }
                         }
-                        PipelineErrorKind::Critical(_) => return Err(e),
+                        PipelineErrorKind::Critical(_) => {
+                            info!(target: "pipeline", "get critical error");
+                            return Err(e)
+                        },
                     }
                 }
             }
 
             if let Some(attrs) = self.next() {
+                info!(target: "produce payload", "get some attribyte");
                 return Ok(attrs);
             }
         }

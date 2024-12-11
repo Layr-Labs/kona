@@ -81,8 +81,9 @@ where
 
     /// Adds new L1 data to the channel bank. Should only be called after all data has been read.
     pub fn ingest_frame(&mut self, frame: Frame) -> PipelineResult<()> {
+        info!(target: "channel-bank", "ingest_frame 0");
         let origin = self.origin().ok_or(PipelineError::MissingOrigin.crit())?;
-
+        info!(target: "channel-bank", "ingest_frame 1");
         // Get the channel for the frame, or create a new one if it doesn't exist.
         let current_channel = match self.channels.get_mut(&frame.id) {
             Some(c) => c,
@@ -94,6 +95,7 @@ where
             }
         };
 
+        info!(target: "channel-bank", "ingest_frame 2");
         // Check if the channel is not timed out. If it has, ignore the frame.
         if current_channel.open_block_number() + self.cfg.channel_timeout(origin.timestamp) <
             origin.number
@@ -105,13 +107,14 @@ where
             return Ok(());
         }
 
+        info!(target: "channel-bank", "ingest_frame 3");
         // Ingest the frame. If it fails, ignore the frame.
         let frame_id = frame.id;
         if current_channel.add_frame(frame, origin).is_err() {
             warn!(target: "channel-bank", "Failed to add frame to channel: {:?}", frame_id);
             return Ok(());
         }
-
+        info!(target: "channel-bank", "ingest_frame 4");
         self.prune()
     }
 
@@ -196,15 +199,18 @@ where
     P: NextFrameProvider + OriginAdvancer + OriginProvider + SignalReceiver + Send + Debug,
 {
     async fn next_data(&mut self) -> PipelineResult<Option<Bytes>> {
+        info!(target: "channel-bank", "impl next_data for ChannelReaderProvider");
         match self.read() {
             Err(e) => {
                 if !matches!(e, PipelineErrorKind::Temporary(PipelineError::Eof)) {
                     return Err(PipelineError::ChannelProviderEmpty.crit());
                 }
             }
-            data => return data,
+            data => {
+                info!(target: "channel-bank", "read data acutally");
+                return data
+            }
         };
-
         // Load the data into the channel bank
         let frame = match self.prev.next_frame().await {
             Ok(f) => f,
@@ -212,6 +218,7 @@ where
                 return Err(e);
             }
         };
+        info!(target: "channel-bank", "got frame");
         let res = self.ingest_frame(frame);
         res?;
         Err(PipelineError::NotEnoughData.temp())

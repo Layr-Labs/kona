@@ -3,6 +3,7 @@
 #![cfg_attr(not(test), warn(unused_crate_dependencies))]
 
 pub mod blobs;
+pub mod eigenda_blobs;
 pub mod cli;
 pub use cli::{init_tracing_subscriber, HostCli};
 
@@ -34,11 +35,12 @@ pub async fn start_server(cfg: HostCli) -> Result<()> {
     let hint_reader = HintReader::new(hint_chan);
     let kv_store = cfg.construct_kv_store();
     let fetcher = if !cfg.is_offline() {
-        let (l1_provider, blob_provider, l2_provider) = cfg.create_providers().await?;
+        let (l1_provider, blob_provider, eigenda_blob_provider, l2_provider) = cfg.create_providers().await?;
         Some(Arc::new(RwLock::new(Fetcher::new(
             kv_store.clone(),
             l1_provider,
             blob_provider,
+            eigenda_blob_provider,
             l2_provider,
             cfg.agreed_l2_head_hash,
         ))))
@@ -69,17 +71,20 @@ pub async fn start_server_and_native_client(cfg: HostCli) -> Result<i32> {
     let preimage_chan = BidirectionalChannel::new()?;
     let kv_store = cfg.construct_kv_store();
     let fetcher = if !cfg.is_offline() {
-        let (l1_provider, blob_provider, l2_provider) = cfg.create_providers().await?;
+        let (l1_provider, blob_provider, eigenda_blob_provider, l2_provider) = cfg.create_providers().await?;
         Some(Arc::new(RwLock::new(Fetcher::new(
             kv_store.clone(),
             l1_provider,
             blob_provider,
+            eigenda_blob_provider,
             l2_provider,
             cfg.agreed_l2_head_hash,
         ))))
     } else {
         None
     };
+
+    info!(target: "host", "fetcher");
 
     // Create the server and start it.
     let server_task = task::spawn(start_native_preimage_server(

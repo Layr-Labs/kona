@@ -59,10 +59,11 @@ where
 
     /// Creates the batch reader from available channel data.
     async fn set_batch_reader(&mut self) -> PipelineResult<()> {
+        info!(target: "channel-reader", "set_batch_reader");
         if self.next_batch.is_none() {
             let channel =
                 self.prev.next_data().await?.ok_or(PipelineError::ChannelReaderEmpty.temp())?;
-
+            info!(target: "channel-reader", "channel {:?}", channel);
             let origin = self.prev.origin().ok_or(PipelineError::MissingOrigin.crit())?;
             let max_rlp_bytes_per_channel = if self.cfg.is_fjord_active(origin.timestamp) {
                 MAX_RLP_BYTES_PER_CHANNEL_FJORD
@@ -110,6 +111,7 @@ where
     }
 
     async fn next_batch(&mut self) -> PipelineResult<Batch> {
+        info!(target: "channel-reader", "next_batch of BatchStreamProvider");
         if let Err(e) = self.set_batch_reader().await {
             debug!(target: "channel-reader", "Failed to set batch reader: {:?}", e);
             self.next_channel();
@@ -122,8 +124,12 @@ where
             .next_batch(self.cfg.as_ref())
             .ok_or(PipelineError::NotEnoughData.temp())
         {
-            Ok(batch) => Ok(batch),
+            Ok(batch) => {
+                info!(target="channel-reader", "batchStream provider next_batch Ok {:?}", batch);
+                Ok(batch)
+            },
             Err(e) => {
+                info!(target="channel-reader", "batchStream provider next_batch {:?}", e);
                 self.next_channel();
                 Err(e)
             }
